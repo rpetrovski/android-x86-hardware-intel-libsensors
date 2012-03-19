@@ -29,6 +29,7 @@
 #include "HidSensor_Compass3D.h"
 #include "HidSensor_ALS.h"
 #include "HidSensor_Proximity.h"
+#include "HidSensor_Pressure.h"
 #include "OrientationSensor.h"
 #include "RotVecSensor.h"
 #include "SynthCompassSensor.h"
@@ -39,6 +40,7 @@ static const struct sensor_t sSensorList[] = {
     SynthCompassSensor::sSensorInfo_compass,
     ALSSensor::sSensorInfo_als,
     ProximitySensor::sSensorInfo_proximity,
+    PressureSensor::sSensorInfo_pressure,
     RotVecSensor::sSensorInfo_rotvec,
     OrientationSensor::sSensorInfo_orientation,
 };
@@ -102,6 +104,7 @@ void BoardConfig::initSensors(SensorBase* sensors[])
     sensors[compass] = new CompassSensor();
     sensors[light] = new ALSSensor();
     sensors[proximity] = new ProximitySensor();
+    sensors[pressure] = new PressureSensor();
     sensors[rotvec] = new RotVecSensor();
     sensors[syncompass] = new SynthCompassSensor();
     sensors[orientation] = new OrientationSensor();
@@ -115,6 +118,7 @@ int BoardConfig::handleToDriver(int handle)
     case ID_M:
         return compass;
     case ID_PR:
+	return pressure;
     case ID_T:
         return -EINVAL;
     case ID_GY:
