@@ -30,6 +30,7 @@ enum {
     rotvec,
     syncompass,
     orientation,
+    proximity,
     numSensorDrivers,
     numFds,
 };

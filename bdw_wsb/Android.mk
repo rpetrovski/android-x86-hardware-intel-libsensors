@@ -36,6 +36,7 @@ sensor_src_files := $(common_src_path)/HidSensor_Accel3D.cpp \
 		    $(common_src_path)/HidSensor_Gyro3D.cpp \
 		    $(common_src_path)/HidSensor_Compass3D.cpp \
 		    $(common_src_path)/HidSensor_ALS.cpp \
+		    $(common_src_path)/HidSensor_Proximity.cpp \
 		    $(common_src_path)/RotVecSensor.cpp \
 		    $(common_src_path)/SynthCompassSensor.cpp \
 		    $(common_src_path)/OrientationSensor.cpp \

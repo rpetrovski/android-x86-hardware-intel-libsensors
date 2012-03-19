@@ -28,6 +28,7 @@
 #include "HidSensor_Gyro3D.h"
 #include "HidSensor_Compass3D.h"
 #include "HidSensor_ALS.h"
+#include "HidSensor_Proximity.h"
 #include "OrientationSensor.h"
 #include "RotVecSensor.h"
 #include "SynthCompassSensor.h"
@@ -37,6 +38,7 @@ static const struct sensor_t sSensorList[] = {
     GyroSensor::sSensorInfo_gyro3D,
     SynthCompassSensor::sSensorInfo_compass,
     ALSSensor::sSensorInfo_als,
+    ProximitySensor::sSensorInfo_proximity,
     RotVecSensor::sSensorInfo_rotvec,
     OrientationSensor::sSensorInfo_orientation,
 };
@@ -99,6 +101,7 @@ void BoardConfig::initSensors(SensorBase* sensors[])
     sensors[gyro] = new GyroSensor();
     sensors[compass] = new CompassSensor();
     sensors[light] = new ALSSensor();
+    sensors[proximity] = new ProximitySensor();
     sensors[rotvec] = new RotVecSensor();
     sensors[syncompass] = new SynthCompassSensor();
     sensors[orientation] = new OrientationSensor();
@@ -124,6 +127,8 @@ int BoardConfig::handleToDriver(int handle)
         return syncompass;
     case ID_O:
         return orientation;
+    case ID_P:
+        return proximity;
   default:
         return -EINVAL;
     }
