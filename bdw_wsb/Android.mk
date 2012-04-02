@@ -15,7 +15,7 @@
 # HAL module implemenation, not prelinked, and stored in
 # hw/<SENSORS_HARDWARE_MODULE_ID>.<ro.product.board>.so
 
-ifeq ($(TARGET_BOARD_PLATFORM),broadwell)
+ifeq ($(TARGET_PRODUCT_DEVICE),bdw_wsb)
 ifeq ($(BOARD_USE_PLATFORM_SENSOR_LIB),true)
 
 LOCAL_PATH := $(call my-dir)
