@@ -24,6 +24,7 @@
 #include <poll.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include <linux/input.h>
 #include <linux/akm8973.h>
@@ -88,13 +89,17 @@ private:
 /*****************************************************************************/
 
 sensors_poll_context_t::sensors_poll_context_t()
+                       :mSensors()
 {
     BoardConfig::initSensors(mSensors);
 
-    for (int i=0; i < numSensorDrivers; i++) {
-        mPollFds[i].fd = mSensors[i]->fd();
-        mPollFds[i].events = POLLIN;
-        mPollFds[i].revents = 0;
+    for (int i = 0; i < numSensorDrivers; i++) {
+        assert(mSensors[i]);
+        if (mSensors[i]){
+            mPollFds[i].fd = mSensors[i]->fd();
+            mPollFds[i].events = POLLIN;
+            mPollFds[i].revents = 0;
+        }
     }
 
     int wakeFds[2];
@@ -124,13 +129,16 @@ int sensors_poll_context_t::activate(int handle, int enabled) {
     ALOGD("%s: %s sensor %d", __func__, enabled?"enable":"disable", index);
     SensorBase* const s(mSensors[index]);
     int err = 0;
+
     if (enabled) {
-        if (((err = s->open()) > 0) && (err = s->enable(1)) == 0) {
-            const char wakeMessage(WAKE_MESSAGE);
-            int result = write(mWritePipeFd, &wakeMessage, 1);
-            ALOGE_IF(result<0, "error sending wake message (%s)", strerror(errno));
-        } else
-            s->close();
+        err = s->discover();
+        if (err < 0) {
+            return err;
+        }
+        if (s->open() > 0) {
+            if ((err = s->enable(1)) < 0)
+                s->close();
+        }
     } else {
         s->enable(0);
         s->close();
@@ -139,7 +147,12 @@ int sensors_poll_context_t::activate(int handle, int enabled) {
     /* If the file descriptor is closed or opened the stored desciptor
        should be updated. Even when not opened/closed the fd should
        return correct value */
-    mPollFds[index].fd = s->fd();
+    if (mPollFds[index].fd != s->fd()) {
+        const char wakeMessage(WAKE_MESSAGE);
+        int result = write(mWritePipeFd, &wakeMessage, 1);
+        ALOGE_IF(result<0, "error sending wake message (%s)", strerror(errno));
+        mPollFds[index].fd = s->fd();
+    }
     return err;
 }
 
@@ -159,7 +172,7 @@ int sensors_poll_context_t::pollEvents(sensors_event_t* data, int count)
         // see if we have some leftover from the last poll()
         for (int i=0 ; count && i<numSensorDrivers ; i++) {
             SensorBase* const sensor(mSensors[i]);
-            if ((mPollFds[i].revents & POLLIN) || (sensor->hasPendingEvents())) {
+            if (sensor && ((mPollFds[i].revents & POLLIN) || (sensor->hasPendingEvents()))) {
                 int nb = sensor->readEvents(data, count);
                 if (nb < count) {
                     // no more data for this sensor
@@ -234,21 +247,20 @@ static int poll__poll(struct sensors_poll_device_t *dev,
 static int open_sensors(const struct hw_module_t* module, const char* id,
                         struct hw_device_t** device)
 {
-        int status = -EINVAL;
-        sensors_poll_context_t *dev = new sensors_poll_context_t();
+    int status = -EINVAL;
+    sensors_poll_context_t *dev = new sensors_poll_context_t();
 
-        memset(&dev->device, 0, sizeof(sensors_poll_device_t));
+    memset(&dev->device, 0, sizeof(sensors_poll_device_t));
 
-        dev->device.common.tag = HARDWARE_DEVICE_TAG;
-        dev->device.common.version  = 0;
-        dev->device.common.module   = const_cast<hw_module_t*>(module);
-        dev->device.common.close    = poll__close;
-        dev->device.activate        = poll__activate;
-        dev->device.setDelay        = poll__setDelay;
-        dev->device.poll            = poll__poll;
+    dev->device.common.tag = HARDWARE_DEVICE_TAG;
+    dev->device.common.version = 0;
+    dev->device.common.module = const_cast < hw_module_t * > (module);
+    dev->device.common.close = poll__close;
+    dev->device.activate = poll__activate;
+    dev->device.setDelay = poll__setDelay;
+    dev->device.poll = poll__poll;
 
-        *device = &dev->device.common;
-        status = 0;
-
-        return status;
+    *device = &dev->device.common;
+    status = 0;
+    return status;
 }

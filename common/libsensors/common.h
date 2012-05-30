@@ -29,6 +29,7 @@
 #define ID_GY (5)
 #define ID_PR (6)
 #define ID_T  (7)
+#define MAX_SENSOR_CNT (ID_T+1)
 
 #define SENSORS_ACCELERATION     (1<<ID_A)
 #define SENSORS_MAGNETIC_FIELD   (1<<ID_M)

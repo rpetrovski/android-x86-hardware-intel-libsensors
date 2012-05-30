@@ -39,6 +39,10 @@ int64_t SensorBase::getTimestamp()
 
 int SensorBase::open()
 {
+    if (mDevPath == "") {
+        ALOGE("mDevPath is not set");
+        return -1;
+    }
     mFd = ::open(mDevPath.c_str(), O_RDONLY);
     ALOGE_IF(mFd < 0, "%s: device %s err:%d", __func__, mDevPath.c_str(), -errno);
     ALOGV("%s: device path:%s, fd:%d", __func__, mDevPath.c_str(), mFd);

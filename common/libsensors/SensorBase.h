@@ -64,14 +64,20 @@ public:
         mHasPendingEvent(false),
         mEnabled(false) {};
 
-    virtual ~SensorBase() { close(); };
+    SensorBase(std::string dev_path):
+        mDevPath(dev_path),
+        mFd(-1),
+        mHasPendingEvent(false),
+        mEnabled(false) {};
 
+    virtual ~SensorBase() { close(); };
     virtual int open();
     virtual void close();
     virtual int enable(int enabled) = 0;
 
     virtual int readEvents(sensors_event_t *data, int count) = 0;
     virtual int setDelay(int64_t ns) = 0;
+    virtual int discover() { return 0; }
 
     int fd() const { return mFd; };
     virtual bool hasPendingEvents() const { return mHasPendingEvent; };
