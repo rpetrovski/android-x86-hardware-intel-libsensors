@@ -63,7 +63,7 @@ again:
                 count--;
                 numEventReceived++;
             }
-            LOGV("%s:%s:, in type = EV_SYN, after, count = %d, numEventReceived = %d, mEnabled = %d",
+            ALOGV("%s:%s:, in type = EV_SYN, after, count = %d, numEventReceived = %d, mEnabled = %d",
                  __func__, mDevPath.c_str(), count, numEventReceived, mEnabled);
         }
 
@@ -103,7 +103,7 @@ bool SensorInputDev::findInputDev(const std::string &inputName,
         if (fd < 0)
             continue;
 
-        LOGV("%s: probing path %s against %s", __func__, (dev + "/" + de->d_name).c_str(), inputName.c_str());
+        ALOGV("%s: probing path %s against %s", __func__, (dev + "/" + de->d_name).c_str(), inputName.c_str());
         char readName[80];
         if (ioctl(fd, EVIOCGNAME(sizeof(readName) - 1), &readName) < 1)
                 readName[0] = '\0';
@@ -113,14 +113,14 @@ bool SensorInputDev::findInputDev(const std::string &inputName,
         if (inputName.compare(readName) == 0) {
             foundPath = (dev + "/" + de->d_name);
             found = true;
-            LOGV("%s: found %s", __func__, foundPath.c_str());
+            ALOGV("%s: found %s", __func__, foundPath.c_str());
             break;
         }
     }
 
     closedir(dir);
 
-    LOGE_IF(!found, "couldn't find '%s' input device", inputName.c_str());
+    ALOGE_IF(!found, "couldn't find '%s' input device", inputName.c_str());
 
     return found;
 }

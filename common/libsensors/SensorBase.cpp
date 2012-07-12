@@ -40,8 +40,8 @@ int64_t SensorBase::getTimestamp()
 int SensorBase::open()
 {
     mFd = ::open(mDevPath.c_str(), O_RDONLY);
-    LOGE_IF(mFd < 0, "%s: device %s err:%d", __func__, mDevPath.c_str(), -errno);
-    LOGV("%s: device path:%s, fd:%d", __func__, mDevPath.c_str(), mFd);
+    ALOGE_IF(mFd < 0, "%s: device %s err:%d", __func__, mDevPath.c_str(), -errno);
+    ALOGV("%s: device path:%s, fd:%d", __func__, mDevPath.c_str(), mFd);
     return mFd;
 }
 
@@ -49,5 +49,5 @@ void SensorBase::close()
 {
     int ret = ::close(mFd);
     mFd = -1;
-    LOGV("%s: device path:%s, fd:%d", __func__, mDevPath.c_str(), mFd);
+    ALOGV("%s: device path:%s, fd:%d", __func__, mDevPath.c_str(), mFd);
 }
