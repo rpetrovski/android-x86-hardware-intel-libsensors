@@ -145,16 +145,31 @@ inline float convert_from_vtf_format(int size, int exponent, unsigned int value)
     }
 }
 
+// Platform sensor orientatation
+#define DEF_ORIENT_ACCEL_X                   -1
+#define DEF_ORIENT_ACCEL_Y                   -1
+#define DEF_ORIENT_ACCEL_Z                   -1
+
+#define DEF_ORIENT_GYRO_X                   -1
+#define DEF_ORIENT_GYRO_Y                   -1
+#define DEF_ORIENT_GYRO_Z                   -1
+
 // G to m/s2
 #define CONVERT_FROM_VTF16(s,d,x)      (convert_from_vtf_format(s,d,x))
-#define CONVERT_A_G_VTF16E14_X(s,d,x)  (convert_from_vtf_format(s,d,x)*GRAVITY)
-#define CONVERT_A_G_VTF16E14_Y(s,d,x)  (convert_from_vtf_format(s,d,x)*GRAVITY)
-#define CONVERT_A_G_VTF16E14_Z(s,d,x)  (convert_from_vtf_format(s,d,x)*GRAVITY)
+#define CONVERT_A_G_VTF16E14_X(s,d,x)  (DEF_ORIENT_ACCEL_X *\
+                                        convert_from_vtf_format(s,d,x)*GRAVITY)
+#define CONVERT_A_G_VTF16E14_Y(s,d,x)  (DEF_ORIENT_ACCEL_Y *\
+                                        convert_from_vtf_format(s,d,x)*GRAVITY)
+#define CONVERT_A_G_VTF16E14_Z(s,d,x)  (DEF_ORIENT_ACCEL_Z *\
+                                        convert_from_vtf_format(s,d,x)*GRAVITY)
 
 // Degree/sec to radian/sec
-#define CONVERT_G_D_VTF16E14_X(s,d,x)  (convert_from_vtf_format(s,d,x) * ((float)M_PI/180.0f))
-#define CONVERT_G_D_VTF16E14_Y(s,d,x)  (convert_from_vtf_format(s,d,x) * ((float)M_PI/180.0f))
-#define CONVERT_G_D_VTF16E14_Z(s,d,x)  (convert_from_vtf_format(s,d,x) * ((float)M_PI/180.0f))
+#define CONVERT_G_D_VTF16E14_X(s,d,x)  (DEF_ORIENT_GYRO_X *\
+                                        convert_from_vtf_format(s,d,x) * ((float)M_PI/180.0f))
+#define CONVERT_G_D_VTF16E14_Y(s,d,x)  (DEF_ORIENT_GYRO_Y *\
+                                        convert_from_vtf_format(s,d,x) * ((float)M_PI/180.0f))
+#define CONVERT_G_D_VTF16E14_Z(s,d,x)  (DEF_ORIENT_GYRO_Z *\
+                                        convert_from_vtf_format(s,d,x) * ((float)M_PI/180.0f))
 
 // Milli gauss to micro tesla
 #define CONVERT_M_MG_VTF16E14_X(s,d,x) (convert_from_vtf_format(s,d,x)/10)

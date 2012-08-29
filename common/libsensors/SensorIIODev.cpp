@@ -21,6 +21,7 @@
 
 static const std::string IIO_DIR = "/sys/bus/iio/devices";
 static const int DEF_BUFFER_LEN = 2;
+static const int DEF_HYST_VALUE = 0;
 
 SensorIIODev::SensorIIODev(const std::string& dev_name, const std::string& units,
                            const std::string& exponent,
@@ -126,7 +127,7 @@ int SensorIIODev::enable(int enabled)
             goto err_ret;
         if (DeviceActivate(GetDeviceNumber(), 1) < 0)
             goto err_ret;
-        if (DeviceSetSensitivity(GetDeviceNumber(), 1) < 0)
+        if (DeviceSetSensitivity(GetDeviceNumber(), DEF_HYST_VALUE) < 0)
             goto err_ret;
         if (AllocateRxBuffer() < 0)
             goto err_ret;
