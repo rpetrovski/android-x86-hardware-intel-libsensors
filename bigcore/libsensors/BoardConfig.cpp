@@ -41,6 +41,24 @@ const struct sensor_t* BoardConfig::sensorList()
 
 int BoardConfig::sensorListSize()
 {
+    int num_files(0);
+    DIR *dp(0);
+    struct dirent *dirp(0);
+
+    if ((dp = opendir("/sys/bus/iio/devices")) == NULL){
+        ALOGI("/sys/bus/iio/devices doesn't exist. Reporting no sensors.");
+        return 0;
+    }
+    while ((dirp = readdir(dp)) != NULL){
+        num_files++;
+    }
+    closedir(dp);
+
+    if (num_files <= 2) {
+        ALOGI("No entries found in /sys/bus/iio/devices. Reporting no sensors.");
+        return 0;
+    }
+
     return ARRAY_SIZE(sSensorList);
 }
 
