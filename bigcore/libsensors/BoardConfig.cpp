@@ -17,6 +17,8 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <cutils/log.h>
+#include <unistd.h>
+#include <cutils/properties.h>
 
 #include "common.h"
 
@@ -44,22 +46,46 @@ int BoardConfig::sensorListSize()
     int num_files(0);
     DIR *dp(0);
     struct dirent *dirp(0);
+    char *key = "persist.sys.sensors.iio.present";
+    char value[PROPERTY_VALUE_MAX];
 
-    if ((dp = opendir("/sys/bus/iio/devices")) == NULL){
-        ALOGI("/sys/bus/iio/devices doesn't exist. Reporting no sensors.");
-        return 0;
-    }
-    while ((dirp = readdir(dp)) != NULL){
-        num_files++;
-    }
-    closedir(dp);
-
-    if (num_files <= 2) {
-        ALOGI("No entries found in /sys/bus/iio/devices. Reporting no sensors.");
-        return 0;
+    if (property_get(key, value, "")) {
+        if (strncmp(value, "1", 1) == 0) {
+            ALOGI("IIO sensor hub detected previously; assuming it is still attached.");
+            return ARRAY_SIZE(sSensorList);
+        } else {
+            ALOGI("IIO sensor hub not detected previously; assuming it still is not attached.");
+            return 0;
+        }
     }
 
-    return ARRAY_SIZE(sSensorList);
+    for (int i=0; i<50; i++) {
+        num_files = 0;
+        if ((dp = opendir("/sys/bus/iio/devices")) == NULL){
+            usleep(20000);
+            continue;
+        }
+        while ((dirp = readdir(dp)) != NULL){
+            num_files++;
+        }
+        closedir(dp);
+
+        if (num_files <= 2) {
+            usleep(20000);
+            continue;
+        }
+        ALOGI("Found IIO sensor hub.");
+        if (property_set(key, "1") != 0) {
+            ALOGE("Failed to set %s", key);
+        }
+        return ARRAY_SIZE(sSensorList);
+    }
+
+    ALOGI("Didn't find IIO sensor hub.");
+    if (property_set(key, "0") != 0) {
+        ALOGE("Failed to set %s", key);
+    }
+    return 0;
 }
 
 void BoardConfig::initSensors(SensorBase* sensors[])
