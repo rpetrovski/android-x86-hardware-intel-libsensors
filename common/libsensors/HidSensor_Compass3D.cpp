@@ -40,7 +40,7 @@ const struct sensor_t CompassSensor::sSensorInfo_compass3D = {
     "HID_SENSOR Compass 3D", "Intel", 1, SENSORS_MAGNETIC_FIELD_HANDLE,
         SENSOR_TYPE_MAGNETIC_FIELD, RANGE_M, RESOLUTION_M, 0.1f, 23000, {}
 };
-const int retry_cnt = 5;
+const int retry_cnt = 10;
 
 CompassSensor::CompassSensor(): SensorIIODev("magn_3d", "in_magn_scale", "in_magn_offset", "in_magn_", retry_cnt){
     ALOGV(">>ComassSensor 3D: constructor!");

@@ -36,7 +36,7 @@ const struct sensor_t ALSSensor::sSensorInfo_als = {
         50000.0f, 1.0f, 0.75f, 0, {}
     ,
 };
-const int retry_cnt = 5;
+const int retry_cnt = 10;
 
 ALSSensor::ALSSensor(): SensorIIODev("als", "in_intensity_scale", "in_intensity_offset", "in_intensity_", retry_cnt){
     ALOGV(">>ALSSensor 3D: constructor!");

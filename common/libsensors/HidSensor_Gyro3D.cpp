@@ -42,7 +42,7 @@ const struct sensor_t GyroSensor::sSensorInfo_gyro3D = {
 };
 const int HID_USAGE_SENSOR_UNITS_DEGREES_PER_SECOND = 0x15;
 const int HID_USAGE_SENSOR_UNITS_RADIANS_PER_SECOND = 0xF012;
-const int retry_cnt = 5;
+const int retry_cnt = 10;
 
 GyroSensor::GyroSensor(): SensorIIODev("gyro_3d", "in_anglvel_scale", "in_anglvel_offset", "in_anglvel_", retry_cnt){
     ALOGV("GyroSensor: constructor\n");

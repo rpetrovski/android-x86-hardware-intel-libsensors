@@ -43,7 +43,7 @@ const struct sensor_t AccelSensor::sSensorInfo_accel3D = {
 
 const long HID_USAGE_SENSOR_UNITS_G = 0x1A;
 const long HID_USAGE_SENSOR_UNITS_METERS_PER_SEC_SQRD = (0x11, 0xE0);
-const int retry_cnt = 5;
+const int retry_cnt = 10;
 
 AccelSensor::AccelSensor(): SensorIIODev("accel_3d", "in_accel_scale", "in_accel_offset", "in_accel_", retry_cnt){
     ALOGV(">>AccelSensor 3D: constructor!");

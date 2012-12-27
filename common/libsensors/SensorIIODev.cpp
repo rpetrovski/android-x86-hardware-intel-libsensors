@@ -117,6 +117,12 @@ int SensorIIODev::enable(int enabled)
         return 0;
     }
     if (enabled){
+        // QUIRK: some sensor hubs need to be turned on and off and on
+        // before sending any information. So we turn it on and off first
+        // before enabling again later in this function.
+        EnableBuffer(1);
+        EnableBuffer(0);
+
         if (ReadHIDExponentValue(&unit_expo_value) < 0)
             goto err_ret;
         if (ReadHIDMeasurmentUnit(&units_value) < 0)
@@ -498,6 +504,13 @@ int SensorIIODev::ParseIIODirectory(const std::string& name){
     ret = EnableChannels();
     if (ret < 0){
         ALOGE("ParseIIODirectory Failed due Enable Channels failed\n");
+	if (ret == -EACCES) {
+            // EACCES means the nodes do not have current owner.
+            // Need to retry, or else sensors won't power on.
+            // Other errors can be ignored, as these nodes are
+            // set once, and will return error when set again.
+            return ret;
+        }
     }
 
     // Parse the channels and build a list
