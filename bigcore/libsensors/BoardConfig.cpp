@@ -59,7 +59,7 @@ int BoardConfig::sensorListSize()
         }
     }
 
-    for (int i=0; i<50; i++) {
+    for (int i=0; i<250; i++) {
         num_files = 0;
         if ((dp = opendir("/sys/bus/iio/devices")) == NULL){
             usleep(20000);
