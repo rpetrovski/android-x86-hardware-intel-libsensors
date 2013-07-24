@@ -67,6 +67,9 @@ enum {
 // 720 LSG = 1G
 #define LSG                         (1024.0f)
 #define NUMOFACCDATA                (8.0f)
+
+//min delay for accelerometer
+#define HID_ACCEL3D_MIN_DELAY  16000
 // conversion of acceleration data to SI units (m/s^2)
 
 #define RANGE_A                     (2*GRAVITY_EARTH)
