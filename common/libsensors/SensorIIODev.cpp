@@ -16,6 +16,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <cutils/log.h>
+#include <cutils/properties.h>
 #include "SensorIIODev.h"
 #include "Helpers.h"
 
@@ -64,6 +65,15 @@ int SensorIIODev::discover()
     int cnt;
     int status;
     int ret;
+
+    // Allow overriding sample_delay_min_ms via properties using
+    // the IIO device name.  e.g.:
+    //     ro.sys.sensors_accel_3d_samp_min_ms = 16
+    char sampmin[PROPERTY_VALUE_MAX];
+    std::string pn = "ro.sys.sensors_" + device_name + "_samp_min_ms";
+    property_get(pn.c_str(), sampmin, "");
+    if(*sampmin)
+        sample_delay_min_ms = strtol(sampmin, NULL, 10);
 
     ALOGD(">>%s discover", __func__);
     for (cnt = 0; cnt < retry_count; cnt++) {
