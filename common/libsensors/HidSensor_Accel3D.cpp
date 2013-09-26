@@ -38,7 +38,7 @@ struct accel_3d_sample{
 
 const struct sensor_t AccelSensor::sSensorInfo_accel3D = {
     "HID_SENSOR Accelerometer 3D", "Intel", 1, SENSORS_ACCELERATION_HANDLE,
-        SENSOR_TYPE_ACCELEROMETER, RANGE_A, RESOLUTION_A, 0.23f, HID_ACCEL3D_MIN_DELAY, {}
+        SENSOR_TYPE_ACCELEROMETER, RANGE_A, RESOLUTION_A, 0.23f, 0, {}
 };
 
 const long HID_USAGE_SENSOR_UNITS_G = 0x1A;
@@ -51,6 +51,10 @@ AccelSensor::AccelSensor(): SensorIIODev("accel_3d", "in_accel_scale", "in_accel
     mPendingEvent.sensor = ID_A;
     mPendingEvent.type = SENSOR_TYPE_ACCELEROMETER;
     memset(mPendingEvent.data, 0, sizeof(mPendingEvent.data));
+
+    // CDD requires 120Hz, but HSB caps out at ~62Hz.  Use that as default.
+    sample_delay_min_ms = 16;
+
     ALOGV("<<AccelSensor 3D: constructor!");
 }
 

@@ -35,9 +35,9 @@ SensorIIODev::SensorIIODev(const std::string& dev_name, const std::string& units
                unit_expo_value(0),
                units_value(0),
                retry_count(retry_cnt),
-               raw_buffer(NULL)
+               raw_buffer(NULL),
+               sample_delay_min_ms(0)
 {
-
     ALOGV("%s", __func__);
 }
 
@@ -585,6 +585,9 @@ int SensorIIODev::SetSampleDelay(int dev_num, int period){
     std::stringstream sample_rate_str;
 
     ALOGV("%s: sample_rate:%d", __func__, rate);
+
+    if (sample_delay_min_ms && period < sample_delay_min_ms)
+        period = sample_delay_min_ms;
 
     filename << IIO_DIR << "/" << "iio:device" << dev_num << "/" << channel_prefix_str << "sampling_frequency";
     if (period <= 0) {

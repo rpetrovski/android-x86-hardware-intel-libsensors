@@ -44,6 +44,11 @@ ALSSensor::ALSSensor(): SensorIIODev("als", "in_intensity_scale", "in_intensity_
     mPendingEvent.sensor = ID_L;
     mPendingEvent.type = SENSOR_TYPE_LIGHT;
     memset(mPendingEvent.data, 0, sizeof(mPendingEvent.data));
+
+    // CDD is silent on ALS requirements.  Fix default at 2Hz pending
+    // better numbers from somewhere.
+     sample_delay_min_ms = 500;
+
     ALOGV("<<ALSSensor 3D: constructor!");
 }
 

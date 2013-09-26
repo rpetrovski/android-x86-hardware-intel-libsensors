@@ -93,6 +93,18 @@ private:
     int FreeRxBuffer();
 
 protected:
+
+    // Subclasses (e.g. HID devices) may implement "non-streaming"
+    // sensors with a non-constant sample rate, leveraging a
+    // microcontroller "sensor hub" to do the sampling and interrupt
+    // the CPU only on change.  Google allows this in the api by
+    // setting minDelay to 0 in sensor_t.  But if we do that, the
+    // framework has no idea what values can be set so often tries
+    // implausibly high values for "game" mode.  Setting this to
+    // non-zero allows the subclasses to clamp to device-specific
+    // values.
+    int sample_delay_min_ms;
+
     bool IsDeviceInitialized();
     int GetDeviceNumber();
     int SetDataReadyTrigger(int dev_num, bool status);

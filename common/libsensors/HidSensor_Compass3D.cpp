@@ -48,6 +48,10 @@ CompassSensor::CompassSensor(): SensorIIODev("magn_3d", "in_magn_scale", "in_mag
     mPendingEvent.sensor = ID_M;
     mPendingEvent.type = SENSOR_TYPE_MAGNETIC_FIELD;
     memset(mPendingEvent.data, 0, sizeof(mPendingEvent.data));
+
+    // CDD 4.2 requires 10Hz.  20Hz is the maximum for HSB.
+    sample_delay_min_ms = 50;
+
     ALOGV("<<ComassSensor 3D: constructor!");
 }
 

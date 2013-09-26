@@ -51,6 +51,9 @@ GyroSensor::GyroSensor(): SensorIIODev("gyro_3d", "in_anglvel_scale", "in_anglve
     mPendingEvent.type = SENSOR_TYPE_GYROSCOPE;
     memset(mPendingEvent.data, 0, sizeof(mPendingEvent.data));
 
+    // CDD requires 200Hz (!), but HSB caps out at ~62Hz.  Use that as
+    // default.
+    sample_delay_min_ms = 16;
 }
 
 int GyroSensor::processEvent(unsigned char *raw_data, size_t raw_data_len){
