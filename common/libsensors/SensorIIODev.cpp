@@ -623,13 +623,16 @@ int SensorIIODev::readEvents(sensors_event_t *data, int count){
         *data = mPendingEvent;
         return 1;
     }
-    read_size = read(mFd, raw_buffer, datum_size * buffer_len);
+    read_size = read(mFd, raw_buffer, datum_size);
     numEventReceived = 0;
-    if (processEvent(raw_buffer, datum_size) >= 0){
-        mPendingEvent.timestamp = getTimestamp();
-        mPendingEvent.timestamp = getTimestamp();
-        *data = mPendingEvent;
-        numEventReceived++;
+    if(read_size != datum_size) {
+        ALOGE("read() error (or short count) from IIO device: %d\n", errno);
+    } else {
+        if (processEvent(raw_buffer, datum_size) >= 0) {
+            mPendingEvent.timestamp = getTimestamp();
+            *data = mPendingEvent;
+            numEventReceived++;
+        }
     }
     return numEventReceived;
 }
