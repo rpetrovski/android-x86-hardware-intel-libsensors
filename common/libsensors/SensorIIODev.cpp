@@ -381,6 +381,7 @@ int SensorIIODev::BuildChannelList(){
     // File ending with _en will specify a channel
     // it contains the count. If we add all these count
     // those many channels present
+    info_array.clear();
     for (unsigned int i = 0; i < files.size(); i++){
         int len = files[i].length();
         // At the least the length should be more than 3 for "_en"
