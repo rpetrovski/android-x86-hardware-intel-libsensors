@@ -27,6 +27,8 @@ enum {
     gyro,
     compass,
     light,
+    rotvec,
+    syncompass,
     numSensorDrivers,
     numFds,
 };

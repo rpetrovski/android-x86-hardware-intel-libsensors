@@ -38,6 +38,9 @@
 #include "SensorConfig.h"
 #include "BoardConfig.h"
 
+#include "RotVecSensor.h"
+#include "SynthCompassSensor.h"
+
 /*****************************************************************************/
 
 /* The SENSORS Module */
@@ -102,6 +105,15 @@ sensors_poll_context_t::sensors_poll_context_t()
         }
     }
 
+    // Mild hack: the synthetic compass is implemented as a slave of
+    // the rotation vector, so we have to tell them about each other
+    // explicitly in lieu of an architecture that lets them probe.
+    SensorBase *rv = mSensors[rotvec], *sc = mSensors[syncompass];
+    if (rv && sc) {
+        ((RotVecSensor*)rv)->setSynthCompass((SynthCompassSensor*)sc);
+        ((SynthCompassSensor*)sc)->setRotVecSensor((RotVecSensor*)rv);
+    }
+
     int wakeFds[2];
     int result = pipe(wakeFds);
     ALOGE_IF(result<0, "error creating wake pipe (%s)", strerror(errno));
@@ -131,14 +143,8 @@ int sensors_poll_context_t::activate(int handle, int enabled) {
     int err = 0;
 
     if (enabled) {
-        err = s->discover();
-        if (err < 0) {
-            return err;
-        }
-        if (s->open() > 0) {
-            if ((err = s->enable(1)) < 0)
-                s->close();
-        }
+        if ((err = s->enable(1)) < 0)
+            s->close();
     } else {
         s->enable(0);
         s->close();
@@ -172,6 +178,7 @@ int sensors_poll_context_t::pollEvents(sensors_event_t* data, int count)
         // see if we have some leftover from the last poll()
         for (int i=0 ; count && i<numSensorDrivers ; i++) {
             SensorBase* const sensor(mSensors[i]);
+            mPollFds[i].fd = sensor->fd();
             if (sensor && ((mPollFds[i].revents & POLLIN) || (sensor->hasPendingEvents()))) {
                 int nb = sensor->readEvents(data, count);
                 if (nb < count) {
@@ -186,6 +193,20 @@ int sensors_poll_context_t::pollEvents(sensors_event_t* data, int count)
                 count -= nb;
                 nbEvents += nb;
                 data += nb;
+            }
+        }
+
+        // Some sensors ("slaves") may have generated events based on
+        // the input to the sensors above.  So check again.
+        for (int i=0 ; count && i<numSensorDrivers ; i++) {
+            SensorBase *sensor = mSensors[i];
+            if (sensor->hasPendingEvents()) {
+                int nb = sensor->readEvents(data, count);
+                if (nb > 0) {
+                    count -= nb;
+                    nbEvents += nb;
+                    data += nb;
+                }
             }
         }
 

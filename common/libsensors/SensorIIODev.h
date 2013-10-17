@@ -76,6 +76,7 @@ private:
     long units_value;
     int retry_count;
     unsigned char *raw_buffer;
+    int mRefCount;
 
     int discover();
     int EnableIIODevice();
@@ -128,5 +129,7 @@ public:
     SensorIIODev(const std::string& dev_name, const std::string& units, const std::string& exponent, const std::string& channel_prefix);
     SensorIIODev(const std::string& dev_name, const std::string& units, const std::string& exponent, const std::string& channel_prefix, int retry_cnt);
 
+    // start/stop stream without changing "enabled" status. For slaves.
+    int startStop(int enabled);
 };
 #endif

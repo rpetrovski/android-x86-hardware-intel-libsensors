@@ -29,7 +29,9 @@
 #define ID_GY (5)
 #define ID_PR (6)
 #define ID_T  (7)
-#define MAX_SENSOR_CNT (ID_T+1)
+#define ID_R  (8) // rotation vector
+#define ID_SC (9) // "faked" level compass
+#define MAX_SENSOR_CNT (ID_SC+1)
 
 #define SENSORS_ACCELERATION     (1<<ID_A)
 #define SENSORS_MAGNETIC_FIELD   (1<<ID_M)
@@ -39,6 +41,8 @@
 #define SENSORS_GYROSCOPE        (1<<ID_GY)
 #define SENSORS_PRESSURE         (1<<ID_PR)
 #define SENSORS_TEMPERATURE      (1<<ID_T)
+#define SENSORS_ROT_VEC          (1<<ID_R)
+#define SENSORS_SYNCOMPASS       (1<<ID_SC)
 
 #define SENSORS_ACCELERATION_HANDLE     0
 #define SENSORS_MAGNETIC_FIELD_HANDLE   1
@@ -48,6 +52,8 @@
 #define SENSORS_GYROSCOPE_HANDLE        5
 #define SENSORS_PRESSURE_HANDLE         6
 #define SENSORS_TEMPERATURE_HANDLE      7
+#define SENSORS_ROT_VEC_HANDLE          8
+#define SENSORS_SYNCOMPASS_HANDLE       9
 
 /* The next one is used to set the timeout used for polling the file
  * descriptors.

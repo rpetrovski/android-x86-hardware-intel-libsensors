@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
 #include <dirent.h>
 #include <fcntl.h>
 #include <cutils/log.h>
 #include <cutils/properties.h>
 #include "SensorIIODev.h"
 #include "Helpers.h"
+
+using namespace std;
 
 static const std::string IIO_DIR = "/sys/bus/iio/devices";
 static const int DEF_BUFFER_LEN = 2;
@@ -37,6 +40,7 @@ SensorIIODev::SensorIIODev(const std::string& dev_name, const std::string& units
                units_value(0),
                retry_count(retry_cnt),
                raw_buffer(NULL),
+               mRefCount(0),
                sample_delay_min_ms(0)
 {
     ALOGV("%s", __func__);
@@ -54,7 +58,8 @@ SensorIIODev::SensorIIODev(const std::string& dev_name, const std::string& units
                unit_expo_value(0),
                units_value(0),
                retry_count(1),
-               raw_buffer(NULL)
+               raw_buffer(NULL),
+               mRefCount(0)
 {
 
     ALOGV("%s", __func__);
@@ -119,14 +124,38 @@ int SensorIIODev::FreeRxBuffer()
 
 int SensorIIODev::enable(int enabled)
 {
+    // startStop() handles the internal sensor stream, which may be
+    // used by slaves.  The mEnabled flag is what gates the output of
+    // this particular sensor.
+    int ret = startStop(enabled);
+    if (ret)
+        return ret;
+    mEnabled = enabled;
+    return 0;
+}
+
+int SensorIIODev::startStop(int enabled)
+{
+    int alive = mRefCount > 0;
+    mRefCount = max(0, enabled ? mRefCount+1 : mRefCount-1);
+    int alivenew = mRefCount > 0;
+    if (alive == alivenew)
+        return 0;
+
     int ret =0;
 
     ALOGD(">>%s enabled:%d", __func__, enabled);
 
-    if (mEnabled == enabled) {
-        return 0;
-    }
     if (enabled){
+        if ((ret = discover()) < 0) {
+            ALOGE("discover failed: %s\n", device_name.c_str());
+            return ret;
+        }
+        if ((ret = open()) < 0) {
+            ALOGE("open failed: %s\n", device_name.c_str());
+            return ret;
+        }
+
         // QUIRK: some sensor hubs need to be turned on and off and on
         // before sending any information. So we turn it on and off first
         // before enabling again later in this function.
@@ -147,10 +176,8 @@ int SensorIIODev::enable(int enabled)
             goto err_ret;
         if (AllocateRxBuffer() < 0)
             goto err_ret;
-        mEnabled = enabled;
     }
     else{
-        mEnabled = enabled;
         if (SetDataReadyTrigger(GetDeviceNumber(), false) < 0)
             goto err_ret;
         if (EnableBuffer(0) < 0)
@@ -162,10 +189,12 @@ int SensorIIODev::enable(int enabled)
         if (FreeRxBuffer() < 0)
             goto err_ret;
         mDevPath = "";
+        close();
     }
     return 0;
 
 err_ret:
+    close();
     ALOGE("SesnorIIO: Enable failed\n");
     return -1;
 }
@@ -638,10 +667,15 @@ int SensorIIODev::readEvents(sensors_event_t *data, int count){
     if(read_size != datum_size) {
         ALOGE("read() error (or short count) from IIO device: %d\n", errno);
     } else {
+        // Always call processEvent(), but only emit output if
+        // enabled.  We may have slave devices (e.g. we could be a
+        // RotVec serving a SynthCompass without clients of our own).
         if (processEvent(raw_buffer, datum_size) >= 0) {
-            mPendingEvent.timestamp = getTimestamp();
-            *data = mPendingEvent;
-            numEventReceived++;
+            if (mEnabled) {
+                mPendingEvent.timestamp = getTimestamp();
+                *data = mPendingEvent;
+                numEventReceived++;
+            }
         }
     }
     return numEventReceived;
