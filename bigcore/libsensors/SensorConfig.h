@@ -29,6 +29,7 @@ enum {
     light,
     rotvec,
     syncompass,
+    orientation,
     numSensorDrivers,
     numFds,
 };
