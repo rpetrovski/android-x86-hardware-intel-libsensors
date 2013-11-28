@@ -68,6 +68,7 @@ struct sensors_module_t HAL_MODULE_INFO_SYM = {
                 name: "Samsung Sensor module",
                 author: "Samsung Electronic Company",
                 methods: &sensors_module_methods,
+		dso: NULL,
         },
         get_sensors_list: sensors__get_sensors_list,
 };

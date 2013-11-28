@@ -29,6 +29,8 @@ const struct sensor_t OrientationSensor::sSensorInfo_orientation = {
     .resolution = 1./512, // Advertise as 9 bits, no idea about reality
     .power      = 0.1f,
     .minDelay   = 0,
+    .fifoReservedEventCount = 0,
+    .fifoMaxEventCount      = 0,
     .reserved   = {},
 };
 

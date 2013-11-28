@@ -596,7 +596,7 @@ int SensorIIODev::DeviceActivate(int dev_num, int state){
     std::stringstream filename;
     std::stringstream activate_str;
 
-    ALOGV("%s: Device Activate:%d", __func__, rate);
+    ALOGV("%s: Device Activate:%d", __func__, state);
     return 0;
 }
 
@@ -624,7 +624,7 @@ int SensorIIODev::SetSampleDelay(int dev_num, int period){
     std::stringstream filename;
     std::stringstream sample_rate_str;
 
-    ALOGV("%s: sample_rate:%d", __func__, rate);
+    ALOGV("%s: sample_rate:%d", __func__, period);
 
     if (sample_delay_min_ms && period < sample_delay_min_ms)
         period = sample_delay_min_ms;

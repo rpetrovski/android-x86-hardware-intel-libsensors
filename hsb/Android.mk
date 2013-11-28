@@ -15,7 +15,7 @@
 # HAL module implemenation, not prelinked, and stored in
 # hw/<SENSORS_HARDWARE_MODULE_ID>.<ro.product.board>.so
 
-ifeq ($(TARGET_BOARD_PLATFORM),bigcore)
+ifeq ($(TARGET_BOARD_PLATFORM),haswell)
 ifeq ($(BOARD_USE_PLATFORM_SENSOR_LIB),true)
 
 LOCAL_PATH := $(call my-dir)
@@ -23,7 +23,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 # Common files.
-common_src_path := ../../common/libsensors
+common_src_path := ..
 common_src_files := $(common_src_path)/sensors.cpp \
 		    $(common_src_path)/SensorBase.cpp \
 		    $(common_src_path)/SensorInputDev.cpp \
@@ -41,7 +41,7 @@ sensor_src_files := $(common_src_path)/HidSensor_Accel3D.cpp \
 		    $(common_src_path)/OrientationSensor.cpp \
 
 include external/stlport/libstlport.mk
-LOCAL_C_INCLUDES += $(LOCAL_PATH) device/intel/common/libsensors
+LOCAL_C_INCLUDES += $(LOCAL_PATH) vendor/intel/hardware/libsensors
 
 LOCAL_MODULE := sensors.$(TARGET_DEVICE)
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
@@ -54,4 +54,4 @@ LOCAL_SRC_FILES := $(common_src_files) $(sensor_src_files) BoardConfig.cpp
 include $(BUILD_SHARED_LIBRARY)
 
 endif # BOARD_USE_PLATFORM_SENSOR_LIB == true
-endif # TARGET_BOARD_PLATFORM == bigcore
+endif # TARGET_BOARD_PLATFORM == haswell

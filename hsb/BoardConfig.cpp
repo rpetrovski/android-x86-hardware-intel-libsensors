@@ -51,7 +51,7 @@ int BoardConfig::sensorListSize()
     int num_files(0);
     DIR *dp(0);
     struct dirent *dirp(0);
-    char *key = "persist.sys.sensors.iio.present";
+    const char *key = "persist.sys.sensors.iio.present";
     char value[PROPERTY_VALUE_MAX];
 
     if (property_get(key, value, "")) {

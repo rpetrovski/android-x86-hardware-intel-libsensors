@@ -45,6 +45,8 @@ const struct sensor_t SynthCompassSensor::sSensorInfo_compass = {
     .resolution = MAG_FIELD_UT/256.0, // IIO reports 8 bit samples
     .power      = 0.1f,
     .minDelay   = 0,
+    .fifoReservedEventCount = 0,
+    .fifoMaxEventCount      = 0,
     .reserved   = {},
 };
 
