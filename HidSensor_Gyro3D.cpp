@@ -38,8 +38,9 @@ struct gyro_3d_sample{
 
 const struct sensor_t GyroSensor::sSensorInfo_gyro3D = {
     "HID_SENSOR Gyro 3D", "Intel", 1, SENSORS_GYROSCOPE_HANDLE,
-    SENSOR_TYPE_GYROSCOPE, RANGE_GYRO, RESOLUTION_GYRO, 6.10f, 0, 0, 0, {}
+    SENSOR_TYPE_GYROSCOPE, RANGE_GYRO, RESOLUTION_GYRO, 6.10f, 100000, 0, 0, {}
 };
+const int HID_USAGE_SENSOR_UNITS_NOT_SPECIFIED      = 0x00;
 const int HID_USAGE_SENSOR_UNITS_DEGREES_PER_SECOND = 0x15;
 const int HID_USAGE_SENSOR_UNITS_RADIANS_PER_SECOND = 0xF012;
 const int retry_cnt = 10;
@@ -68,7 +69,9 @@ int GyroSensor::processEvent(unsigned char *raw_data, size_t raw_data_len){
         return  - 1;
     }
     sample = (struct gyro_3d_sample*)raw_data;
-    if (GetUnitValue() == HID_USAGE_SENSOR_UNITS_DEGREES_PER_SECOND){
+    switch (GetUnitValue()) {
+    case HID_USAGE_SENSOR_UNITS_NOT_SPECIFIED:
+    case HID_USAGE_SENSOR_UNITS_DEGREES_PER_SECOND:
         mPendingEvent.data[0] = mPendingEvent.gyro.x = CONVERT_G_D_VTF16E14_X
             (GetChannelBytesUsedSize(CHANNEL_X), GetExponentValue(), sample->gyro_x)
             ;
@@ -78,8 +81,8 @@ int GyroSensor::processEvent(unsigned char *raw_data, size_t raw_data_len){
         mPendingEvent.data[2] = mPendingEvent.gyro.z = CONVERT_G_D_VTF16E14_Z
             (GetChannelBytesUsedSize(CHANNEL_Z), GetExponentValue(), sample->gyro_z)
             ;
-    }
-    else if (GetUnitValue() == HID_USAGE_SENSOR_UNITS_RADIANS_PER_SECOND){
+        break;
+    case HID_USAGE_SENSOR_UNITS_RADIANS_PER_SECOND:
         mPendingEvent.data[0] = mPendingEvent.gyro.x = CONVERT_FROM_VTF16
             (GetChannelBytesUsedSize(CHANNEL_X), GetExponentValue(), sample->gyro_x)
             ;
@@ -89,9 +92,10 @@ int GyroSensor::processEvent(unsigned char *raw_data, size_t raw_data_len){
         mPendingEvent.data[2] = mPendingEvent.gyro.z = CONVERT_FROM_VTF16
             (GetChannelBytesUsedSize(CHANNEL_Z), GetExponentValue(), sample->gyro_z)
             ;
-    }
-    else{
+        break;
+    default:
         ALOGE("Gyro Unit is not supported");
+        break;
     }
 
     ALOGV("GYRO 3D Sample %fm/s2 %fm/s2 %fm/s2\n", mPendingEvent.gyro.x,
