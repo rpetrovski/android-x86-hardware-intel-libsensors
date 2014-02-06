@@ -143,6 +143,7 @@ int SensorIIODev::startStop(int enabled)
         return 0;
 
     int ret =0;
+    double sensitivity;
 
     ALOGD(">>%s enabled:%d", __func__, enabled);
 
@@ -172,7 +173,8 @@ int SensorIIODev::startStop(int enabled)
             goto err_ret;
         if (DeviceActivate(GetDeviceNumber(), 1) < 0)
             goto err_ret;
-        if (DeviceSetSensitivity(GetDeviceNumber(), DEF_HYST_VALUE) < 0)
+        sensitivity =  DeviceGetSensitivity(GetDeviceNumber());
+        if (DeviceSetSensitivity(GetDeviceNumber(), sensitivity) < 0)
             goto err_ret;
         if (AllocateRxBuffer() < 0)
             goto err_ret;
@@ -183,8 +185,6 @@ int SensorIIODev::startStop(int enabled)
         if (EnableBuffer(0) < 0)
             goto err_ret;
         if (DeviceActivate(GetDeviceNumber(), 0) < 0)
-            goto err_ret;
-        if (DeviceSetSensitivity(GetDeviceNumber(), 0))
             goto err_ret;
         if (FreeRxBuffer() < 0)
             goto err_ret;
@@ -600,8 +600,27 @@ int SensorIIODev::DeviceActivate(int dev_num, int state){
     return 0;
 }
 
+// Get sensitivity in absolute terms
+double SensorIIODev::DeviceGetSensitivity(int dev_num){
+    std::stringstream filename;
+    std::string sensitivity_str;
+    double value;
+
+    filename << IIO_DIR << "/" << "iio:device" << dev_num << "/" << channel_prefix_str << "hysteresis";
+
+    PathOps path_ops;
+    int ret = path_ops.read(filename.str(), sensitivity_str);
+    if (ret < 0) {
+        ALOGE("Read Error %s", filename.str().c_str());
+	return DEF_HYST_VALUE;
+    }
+    istringstream buffer(sensitivity_str);
+    buffer >> value;
+    return value;
+}
+
 // Set sensitivity in absolute terms
-int SensorIIODev::DeviceSetSensitivity(int dev_num, int value){
+int SensorIIODev::DeviceSetSensitivity(int dev_num, double value){
     std::stringstream filename;
     std::stringstream sensitivity_str;
 

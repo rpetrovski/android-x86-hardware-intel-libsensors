@@ -112,7 +112,8 @@ protected:
     int EnableBuffer(int status);
     int SetSampleDelay(int dev_num, int rate);
     int DeviceActivate(int dev_num, int state);
-    int DeviceSetSensitivity(int dev_num, int value);
+    double DeviceGetSensitivity(int dev_num);
+    int DeviceSetSensitivity(int dev_num, double value);
     long GetUnitValue();
     long GetExponentValue();
     int ReadHIDMeasurmentUnit(long *unit);
