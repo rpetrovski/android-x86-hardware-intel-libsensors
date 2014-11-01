@@ -31,6 +31,10 @@ const struct sensor_t OrientationSensor::sSensorInfo_orientation = {
     .minDelay   = 0,
     .fifoReservedEventCount = 0,
     .fifoMaxEventCount      = 0,
+    .stringType = SENSOR_STRING_TYPE_ORIENTATION,
+    .requiredPermission     = "",
+    .maxDelay   = 0,
+    .flags      = SENSOR_FLAG_CONTINUOUS_MODE,
     .reserved   = {},
 };
 

@@ -38,7 +38,8 @@ struct compass_3d_sample{
 
 const struct sensor_t CompassSensor::sSensorInfo_compass3D = {
     "HID_SENSOR Compass 3D", "Intel", 1, SENSORS_MAGNETIC_FIELD_HANDLE,
-    SENSOR_TYPE_MAGNETIC_FIELD, RANGE_M, RESOLUTION_M, 0.1f, 0, 0, 0, {}
+    SENSOR_TYPE_MAGNETIC_FIELD, RANGE_M, RESOLUTION_M, 0.1f, 0, 0, 0,
+    SENSOR_STRING_TYPE_MAGNETIC_FIELD, "", 0 , SENSOR_FLAG_CONTINUOUS_MODE, {}
 };
 const int retry_cnt = 10;
 

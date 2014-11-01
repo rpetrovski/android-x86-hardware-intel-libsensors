@@ -27,7 +27,6 @@
 #include <assert.h>
 
 #include <linux/input.h>
-#include <linux/akm8973.h>
 
 #include <utils/Atomic.h>
 #include <utils/Log.h>

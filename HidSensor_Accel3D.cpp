@@ -38,7 +38,8 @@ struct accel_3d_sample{
 
 const struct sensor_t AccelSensor::sSensorInfo_accel3D = {
     "HID_SENSOR Accelerometer 3D", "Intel", 1, SENSORS_ACCELERATION_HANDLE,
-    SENSOR_TYPE_ACCELEROMETER, RANGE_A, RESOLUTION_A, 0.23f, 10000, 0, 0, {}
+    SENSOR_TYPE_ACCELEROMETER, RANGE_A, RESOLUTION_A, 0.23f, 10000, 0, 0,
+    SENSOR_STRING_TYPE_ACCELEROMETER, "", 0 , SENSOR_FLAG_CONTINUOUS_MODE, {}
 };
 
 const long HID_USAGE_SENSOR_UNITS_G = 0x1A;

@@ -47,6 +47,10 @@ const struct sensor_t SynthCompassSensor::sSensorInfo_compass = {
     .minDelay   = 0,
     .fifoReservedEventCount = 0,
     .fifoMaxEventCount      = 0,
+    .stringType = SENSOR_STRING_TYPE_MAGNETIC_FIELD,
+    .requiredPermission     = "",
+    .maxDelay   = 0,
+    .flags      = SENSOR_FLAG_CONTINUOUS_MODE,
     .reserved   = {},
 };
 
