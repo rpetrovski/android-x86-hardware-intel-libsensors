@@ -39,9 +39,9 @@ const struct sensor_t RotVecSensor::sSensorInfo_rotvec = {
 };
 
 RotVecSensor::RotVecSensor()
-    : SensorIIODev("dev_rotation",  // name
-                   "in_rot_scale",  // units sysfs node
-                   "in_rot_offset", // exponent sysfs node
+    : SensorIIODev("magn_3d",       // name
+                   "in_magn_scale", // units sysfs node
+                   "in_magn_offset",// exponent sysfs node
                    "in_rot_",       // channel_prefix
                    10)              // retry count
 {
@@ -62,11 +62,6 @@ int RotVecSensor::processEvent(unsigned char *data, size_t len)
         return -1;
     }
 
-    if (len < 4*sizeof(unsigned int)) {
-        ALOGE("Insufficient length \n");
-        return -1;
-    }
-
     // The Intel Sensor Hub emits a normalized x/y/z/w quaternion
     // which acts to rotate points in the device coordinate system
     // (left/up/out) to the world coordinate system (north/east/down).
@@ -74,10 +69,10 @@ int RotVecSensor::processEvent(unsigned char *data, size_t len)
     // copy out the raw data.
 
     unsigned int *sample = (unsigned int*)data;
-    long ex = GetExponentValue();
-    for (int i=0; i<4; i++) {
+    float sc = GetScaleValue();
+    for (int i=0; i < (len / sizeof(*sample)); i++) {
         int sz = GetChannelBytesUsedSize(i);
-        mPendingEvent.data[i] = convert_from_vtf_format(sz, ex, sample[i]);
+        mPendingEvent.data[i] = convert_from_vtf_format(sz, sc, sample[i]);
     }
 
     if (mSynthCompass)

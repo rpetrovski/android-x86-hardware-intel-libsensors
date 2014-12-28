@@ -124,7 +124,7 @@ int BoardConfig::handleToDriver(int handle)
         return syncompass;
     case ID_O:
         return orientation;
-  default:
+    default:
         return -EINVAL;
     }
     return -EINVAL;

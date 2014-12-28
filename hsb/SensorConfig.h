@@ -125,28 +125,18 @@ inline unsigned int set_bit_range(int start, int end)
     return value;
 }
 
-inline float convert_from_vtf_format(int size, int exponent, unsigned int value)
+inline float convert_from_vtf_format(int size, float scale, unsigned int value)
 {
     int divider=1;
     int i;
-    float sample;
-    int mul = 1.0;
+    float mul = 1.0;
 
     value = value & set_bit_range(0, size*8);
     if (value & BIT(size*8-1)) {
         value =  ((1LL << (size*8)) - value);
         mul = -1.0;
     }
-    sample = value * 1.0;
-    if (exponent < 0) {
-        exponent = abs(exponent);
-        for (i = 0; i < exponent; ++i) {
-            divider = divider*10;
-        }
-        return mul * sample/divider;
-    } else {
-        return mul * sample * pow(10.0, exponent);
-    }
+    return mul * scale * value;
 }
 
 // Platform sensor orientatation
@@ -161,11 +151,11 @@ inline float convert_from_vtf_format(int size, int exponent, unsigned int value)
 // G to m/s2
 #define CONVERT_FROM_VTF16(s,d,x)      (convert_from_vtf_format(s,d,x))
 #define CONVERT_A_G_VTF16E14_X(s,d,x)  (DEF_ORIENT_ACCEL_X *\
-                                        convert_from_vtf_format(s,d,x)*GRAVITY)
+                                        convert_from_vtf_format(s,d,x))
 #define CONVERT_A_G_VTF16E14_Y(s,d,x)  (DEF_ORIENT_ACCEL_Y *\
-                                        convert_from_vtf_format(s,d,x)*GRAVITY)
+                                        convert_from_vtf_format(s,d,x))
 #define CONVERT_A_G_VTF16E14_Z(s,d,x)  (DEF_ORIENT_ACCEL_Z *\
-                                        convert_from_vtf_format(s,d,x)*GRAVITY)
+                                        convert_from_vtf_format(s,d,x))
 
 // Degree/sec to radian/sec
 #define CONVERT_G_D_VTF16E14_X(s,d,x)  (DEF_ORIENT_GYRO_X *\

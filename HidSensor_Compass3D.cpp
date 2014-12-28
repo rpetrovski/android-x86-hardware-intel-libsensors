@@ -69,12 +69,13 @@ int CompassSensor::processEvent(unsigned char *raw_data, size_t raw_data_len){
     }
     sample = (struct compass_3d_sample*)raw_data;
 
+    float sc = GetScaleValue();
     mPendingEvent.data[0] = mPendingEvent.magnetic.x = CONVERT_M_MG_VTF16E14_X
-        (GetChannelBytesUsedSize(CHANNEL_X), GetExponentValue(), sample->compass_x);
+        (GetChannelBytesUsedSize(CHANNEL_X), sc, sample->compass_x);
     mPendingEvent.data[1] = mPendingEvent.magnetic.y = CONVERT_M_MG_VTF16E14_Y
-        (GetChannelBytesUsedSize(CHANNEL_Y), GetExponentValue(), sample->compass_y);
+        (GetChannelBytesUsedSize(CHANNEL_Y), sc, sample->compass_y);
     mPendingEvent.data[2] = mPendingEvent.magnetic.z = CONVERT_M_MG_VTF16E14_Z
-        (GetChannelBytesUsedSize(CHANNEL_Z), GetExponentValue(), sample->compass_z);
+        (GetChannelBytesUsedSize(CHANNEL_Z), sc, sample->compass_z);
 
     ALOGV("COMPASS 3D Sample %fuT %fuT %fuT\n", mPendingEvent.magnetic.x,
         mPendingEvent.magnetic.y, mPendingEvent.magnetic.z);
