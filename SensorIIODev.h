@@ -37,8 +37,6 @@
 // Used by SensorIIO device containers
 struct SensorIIOChannel{
     std::string name;
-    float scale;
-    float offset;
     unsigned index;
     unsigned real_bytes;
     unsigned bytes;
@@ -68,12 +66,12 @@ private:
     int enable_buffer;
     int file_id;
     int datum_size;
-    std::string unit_expo_str;
-    std::string unit_str;
+    std::string scale_str;
+    std::string offset_str;
     std::string device_name;
     std::string channel_prefix_str;
-    long unit_expo_value;
-    long units_value;
+    float scale;
+    float offset;
     int retry_count;
     unsigned char *raw_buffer;
     int mRefCount;
@@ -114,10 +112,10 @@ protected:
     int DeviceActivate(int dev_num, int state);
     double DeviceGetSensitivity(int dev_num);
     int DeviceSetSensitivity(int dev_num, double value);
-    long GetUnitValue();
-    long GetExponentValue();
-    int ReadHIDMeasurmentUnit(long *unit);
-    int ReadHIDExponentValue(long *exponent);
+    float GetScaleValue();
+    float GetOffsetValue();
+    int ReadHIDScaleValue(float *scale);
+    int ReadHIDOffsetValue(float *offset);
     int GetChannelBytesUsedSize(unsigned int channel_no);
     virtual int processEvent(unsigned char *raw_data, size_t raw_data_len)
         = 0;
@@ -127,8 +125,7 @@ protected:
     virtual int setInitialState();
 
 public:
-    SensorIIODev(const std::string& dev_name, const std::string& units, const std::string& exponent, const std::string& channel_prefix);
-    SensorIIODev(const std::string& dev_name, const std::string& units, const std::string& exponent, const std::string& channel_prefix, int retry_cnt);
+    SensorIIODev(const std::string& dev_name, const std::string& scale, const std::string& offset, const std::string& channel_prefix, int retry_cnt = 1);
 
     // start/stop stream without changing "enabled" status. For slaves.
     int startStop(int enabled);

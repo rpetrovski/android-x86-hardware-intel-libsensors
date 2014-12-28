@@ -69,36 +69,14 @@ int GyroSensor::processEvent(unsigned char *raw_data, size_t raw_data_len){
         return  - 1;
     }
     sample = (struct gyro_3d_sample*)raw_data;
-    switch (GetUnitValue()) {
-    case HID_USAGE_SENSOR_UNITS_NOT_SPECIFIED:
-    case HID_USAGE_SENSOR_UNITS_DEGREES_PER_SECOND:
-        mPendingEvent.data[0] = mPendingEvent.gyro.x = CONVERT_G_D_VTF16E14_X
-            (GetChannelBytesUsedSize(CHANNEL_X), GetExponentValue(), sample->gyro_x)
-            ;
-        mPendingEvent.data[1] = mPendingEvent.gyro.y = CONVERT_G_D_VTF16E14_Y
-            (GetChannelBytesUsedSize(CHANNEL_Y), GetExponentValue(), sample->gyro_y)
-            ;
-        mPendingEvent.data[2] = mPendingEvent.gyro.z = CONVERT_G_D_VTF16E14_Z
-            (GetChannelBytesUsedSize(CHANNEL_Z), GetExponentValue(), sample->gyro_z)
-            ;
-        break;
-    case HID_USAGE_SENSOR_UNITS_RADIANS_PER_SECOND:
-        mPendingEvent.data[0] = mPendingEvent.gyro.x = CONVERT_FROM_VTF16
-            (GetChannelBytesUsedSize(CHANNEL_X), GetExponentValue(), sample->gyro_x)
-            ;
-        mPendingEvent.data[1] = mPendingEvent.gyro.y = CONVERT_FROM_VTF16
-            (GetChannelBytesUsedSize(CHANNEL_Y), GetExponentValue(), sample->gyro_y)
-            ;
-        mPendingEvent.data[2] = mPendingEvent.gyro.z = CONVERT_FROM_VTF16
-            (GetChannelBytesUsedSize(CHANNEL_Z), GetExponentValue(), sample->gyro_z)
-            ;
-        break;
-    default:
-        ALOGE("Gyro Unit is not supported");
-        break;
-    }
-
-    ALOGV("GYRO 3D Sample %fm/s2 %fm/s2 %fm/s2\n", mPendingEvent.gyro.x,
+    float sc = GetScaleValue();
+    mPendingEvent.data[0] = mPendingEvent.gyro.x = CONVERT_FROM_VTF16
+            (GetChannelBytesUsedSize(CHANNEL_X), sc, sample->gyro_x);
+    mPendingEvent.data[1] = mPendingEvent.gyro.y = CONVERT_FROM_VTF16
+            (GetChannelBytesUsedSize(CHANNEL_Y), sc, sample->gyro_y);
+    mPendingEvent.data[2] = mPendingEvent.gyro.z = CONVERT_FROM_VTF16
+            (GetChannelBytesUsedSize(CHANNEL_Z), sc, sample->gyro_z);
+    ALOGD("GYRO 3D Sample %fm/s2 %fm/s2 %fm/s2\n", mPendingEvent.gyro.x,
         mPendingEvent.gyro.y, mPendingEvent.gyro.z);
     ALOGV("<<%s", __func__);
     return 0;

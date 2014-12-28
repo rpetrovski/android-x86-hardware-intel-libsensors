@@ -27,41 +27,22 @@ static const std::string IIO_DIR = "/sys/bus/iio/devices";
 static const int DEF_BUFFER_LEN = 2;
 static const int DEF_HYST_VALUE = 0;
 
-SensorIIODev::SensorIIODev(const std::string& dev_name, const std::string& units,
-                           const std::string& exponent,
+SensorIIODev::SensorIIODev(const std::string& dev_name, const std::string& scale,
+                           const std::string& offset,
                            const std::string& channel_prefix, int retry_cnt)
              : SensorBase(""),
                initialized(false),
-               unit_expo_str(exponent),
-               unit_str(units),
+               scale_str(scale),
+               offset_str(offset),
                device_name(dev_name),
                channel_prefix_str(channel_prefix),
-               unit_expo_value(0),
-               units_value(0),
+               scale(0.0),
+               offset(0.0),
                retry_count(retry_cnt),
                raw_buffer(NULL),
                mRefCount(0),
                sample_delay_min_ms(0)
 {
-    ALOGV("%s", __func__);
-}
-
-SensorIIODev::SensorIIODev(const std::string& dev_name, const std::string& units,
-                           const std::string& exponent,
-                           const std::string& channel_prefix)
-             : SensorBase(""),
-               initialized(false),
-               unit_expo_str(exponent),
-               unit_str(units),
-               device_name(dev_name),
-               channel_prefix_str(channel_prefix),
-               unit_expo_value(0),
-               units_value(0),
-               retry_count(1),
-               raw_buffer(NULL),
-               mRefCount(0)
-{
-
     ALOGV("%s", __func__);
 }
 
@@ -80,7 +61,7 @@ int SensorIIODev::discover()
     if(*sampmin)
         sample_delay_min_ms = strtol(sampmin, NULL, 10);
 
-    ALOGD(">>%s discover", __func__);
+    ALOGD(">>discover %s", device_name.c_str());
     for (cnt = 0; cnt < retry_count; cnt++) {
         status = ParseIIODirectory(device_name);
         if (status >= 0){
@@ -88,12 +69,11 @@ int SensorIIODev::discover()
             initialized = true;
             filename << "/dev/iio:device" << device_number;
             mDevPath = filename.str();
-            ALOGV("mDevPath %s", mDevPath.c_str());
+            ALOGI("found %s at %s", device_name.c_str(), mDevPath.c_str());
             ret = 0;
             break;
-        }
-        else{
-            ALOGE("Sensor IIO Init failed, retry left:%d\n", retry_count-cnt);
+        } else {
+            ALOGE("%s not found, retry left: %d", device_name.c_str(), retry_count-cnt);
             mDevPath = "";
             ret = -1;
         }
@@ -145,7 +125,7 @@ int SensorIIODev::startStop(int enabled)
     int ret =0;
     double sensitivity;
 
-    ALOGD(">>%s enabled:%d", __func__, enabled);
+    ALOGD(">>%s enabled: %d", device_name.c_str(), enabled);
 
     if (enabled){
         if ((ret = discover()) < 0) {
@@ -163,9 +143,9 @@ int SensorIIODev::startStop(int enabled)
         EnableBuffer(1);
         EnableBuffer(0);
 
-        if (ReadHIDExponentValue(&unit_expo_value) < 0)
+        if (ReadHIDScaleValue(&scale) < 0)
             goto err_ret;
-        if (ReadHIDMeasurmentUnit(&units_value) < 0)
+        if (ReadHIDOffsetValue(&offset) < 0)
             goto err_ret;
         if (SetDataReadyTrigger(GetDeviceNumber(), true) < 0)
             goto err_ret;
@@ -178,6 +158,7 @@ int SensorIIODev::startStop(int enabled)
             goto err_ret;
         if (AllocateRxBuffer() < 0)
             goto err_ret;
+        ALOGI("%s: scale=%f offset=%f", device_name.c_str(), scale, offset);
     }
     else{
         if (SetDataReadyTrigger(GetDeviceNumber(), false) < 0)
@@ -195,7 +176,7 @@ int SensorIIODev::startStop(int enabled)
 
 err_ret:
     close();
-    ALOGE("SesnorIIO: Enable failed\n");
+    ALOGE("SesnorIIO: %s Enable failed", device_name.c_str());
     return -1;
 }
 
@@ -205,7 +186,7 @@ int SensorIIODev::setDelay(int64_t delay_ns){
 
     ALOGV(">>%s %ld", __func__, delay_ns);
     if (IsDeviceInitialized() == false){
-        ALOGE("Device was not initialized \n");
+        ALOGE("Device %s was not initialized", device_name.c_str());
         return  -EFAULT;
     }
     if (ms){
@@ -221,14 +202,14 @@ int SensorIIODev::setInitialState(){
     return 0;
 }
 
-long SensorIIODev::GetUnitValue()
+float SensorIIODev::GetScaleValue()
 {
-    return units_value;
+    return scale;
 }
 
-long SensorIIODev::GetExponentValue()
+float SensorIIODev::GetOffsetValue()
 {
-    return unit_expo_value;
+    return offset;
 }
 
 bool SensorIIODev::IsDeviceInitialized(){
@@ -439,8 +420,6 @@ int SensorIIODev::BuildChannelList(){
             ifs.close();
 
             iio_channel.enabled = 1;
-            iio_channel.scale = 1.0;
-            iio_channel.offset = 0;
 
             iio_channel.name = files[i].substr(0, files[i].length() - 3);
 
@@ -520,7 +499,7 @@ int SensorIIODev::ParseIIODirectory(const std::string& name){
 
     device_number = dev_num = FindDeviceNumberFromName(name, "iio:device");
     if (dev_num < 0){
-        ALOGE("Failed to  find device %s\n", (char*)name.c_str());
+        ALOGE("Failed to find device %s", (char*)name.c_str());
         return  -EFAULT;
     }
 
@@ -561,7 +540,7 @@ int SensorIIODev::ParseIIODirectory(const std::string& name){
     }
 
     datum_size = GetSizeFromChannels();
-    ALOGV("Datum Size %d", datum_size);
+    ALOGD("%s Datum Size %d", device_name.c_str(), datum_size);
     ALOGV("<<%s", __func__);
     return 0;
 }
@@ -700,12 +679,12 @@ int SensorIIODev::readEvents(sensors_event_t *data, int count){
     return numEventReceived;
 }
 
-int SensorIIODev::ReadHIDMeasurmentUnit(long *unit){
+static int ReadHIDSysValue(int dev, const std::string& sys_str, float *value){
     std::stringstream filename;
     int size;
     std::string long_str;
 
-    filename << IIO_DIR << "/" << "iio:device" << device_number << "/" << unit_str;
+    filename << IIO_DIR << "/" << "iio:device" << dev  << "/" << sys_str;
 
     std::ifstream its(filename.str().c_str(), std::ifstream::in);
     if (!its.good()){
@@ -718,34 +697,17 @@ int SensorIIODev::ReadHIDMeasurmentUnit(long *unit){
     its.close();
 
     if (long_str.length() > 0){
-        *unit = atol(long_str.c_str());
+        *value = atof(long_str.c_str());
         return 0;
     }
-    ALOGE("ReadHIDMeasurmentUnit failed");
+    ALOGE("%s: read %s failed", __func__, filename.str().c_str());
     return  -EINVAL;
 }
 
-int SensorIIODev::ReadHIDExponentValue(long *exponent){
-    std::stringstream filename;
-    int size;
-    std::string long_str;
+int SensorIIODev::ReadHIDScaleValue(float *scale){
+    return ReadHIDSysValue(device_number, scale_str, scale);
+}
 
-    filename << IIO_DIR << "/" << "iio:device" << device_number << "/" << unit_expo_str;
-
-    std::ifstream its(filename.str().c_str(), std::ifstream::in);
-    if (!its.good()){
-        ALOGE("%s: Can't Open :%s",
-               __func__, filename.str().c_str());
-        its.close();
-        return -EINVAL;
-    }
-    std::getline(its, long_str);
-    its.close();
-
-    if (long_str.length() > 0){
-        *exponent = atol(long_str.c_str());
-        return 0;
-    }
-    ALOGE("ReadHIDExponentValue failed");
-    return  -EINVAL;
+int SensorIIODev::ReadHIDOffsetValue(float *offset){
+    return ReadHIDSysValue(device_number, offset_str, offset);
 }

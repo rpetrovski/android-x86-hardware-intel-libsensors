@@ -63,10 +63,10 @@ int OrientationSensor::processEvent(unsigned char *data, size_t len)
 
     float vals[3];
     unsigned int *sample = (unsigned int*)data;
-    long ex = GetExponentValue();
+    float sc = GetScaleValue();
     for (int i=0; i<3; i++) {
         int sz = GetChannelBytesUsedSize(i);
-        vals[i] = convert_from_vtf_format(sz, ex, sample[i]);
+        vals[i] = convert_from_vtf_format(sz, sc, sample[i]);
     }
 
     // When held in the Android convention frame (X to the right, Y

@@ -48,7 +48,7 @@ static int open_sensors(const struct hw_module_t* module, const char* id,
                         struct hw_device_t** device);
 
 
-static int sensors__get_sensors_list(struct sensors_module_t* module,
+static int sensors__get_sensors_list(struct sensors_module_t*,
                                      struct sensor_t const** list)
 {
         *list = BoardConfig::sensorList();
@@ -68,7 +68,8 @@ struct sensors_module_t HAL_MODULE_INFO_SYM = {
                 name: "Samsung Sensor module",
                 author: "Samsung Electronic Company",
                 methods: &sensors_module_methods,
-		dso: NULL,
+                dso: NULL,
+                reserved: {}
         },
         get_sensors_list: sensors__get_sensors_list,
 };

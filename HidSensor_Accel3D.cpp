@@ -75,11 +75,11 @@ int AccelSensor::processEvent(unsigned char *raw_data, size_t raw_data_len){
         (raw_data + 2), *(raw_data + 3), *(raw_data + 4), *(raw_data + 5));
     sample = (struct accel_3d_sample*)raw_data;
     mPendingEvent.data[0] = mPendingEvent.acceleration.x =
-        CONVERT_A_G_VTF16E14_X(GetChannelBytesUsedSize(CHANNEL_X), GetExponentValue(), sample->accel_x);
+        CONVERT_A_G_VTF16E14_X(GetChannelBytesUsedSize(CHANNEL_X), GetScaleValue(), sample->accel_x);
     mPendingEvent.data[1] = mPendingEvent.acceleration.y =
-        CONVERT_A_G_VTF16E14_Y(GetChannelBytesUsedSize(CHANNEL_Y), GetExponentValue(), sample->accel_y);
+        CONVERT_A_G_VTF16E14_Y(GetChannelBytesUsedSize(CHANNEL_Y), GetScaleValue(), sample->accel_y);
     mPendingEvent.data[2] = mPendingEvent.acceleration.z =
-        CONVERT_A_G_VTF16E14_Z(GetChannelBytesUsedSize(CHANNEL_Z), GetExponentValue(), sample->accel_z);
+        CONVERT_A_G_VTF16E14_Z(GetChannelBytesUsedSize(CHANNEL_Z), GetScaleValue(), sample->accel_z);
 
     ALOGV("ACCEL 3D Sample %fm/s2 %fm/s2 %fm/s2\n", mPendingEvent.acceleration.x,
         mPendingEvent.acceleration.y, mPendingEvent.acceleration.z);
