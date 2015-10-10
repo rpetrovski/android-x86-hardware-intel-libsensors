@@ -35,45 +35,41 @@ sensor_src_files := HidSensor_Accel3D.cpp \
 		    OrientationSensor.cpp \
 
 include $(CLEAR_VARS)
-include external/stlport/libstlport.mk
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/bdw_rvp
 LOCAL_MODULE := sensors.bdw_rvp
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_CFLAGS := -DLOG_TAG=\"Sensors\"
-LOCAL_SHARED_LIBRARIES := liblog libcutils libdl libstlport
+LOCAL_SHARED_LIBRARIES := liblog libcutils libdl
 LOCAL_SRC_FILES := $(common_src_files) $(sensor_src_files) bdw_rvp/BoardConfig.cpp
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-include external/stlport/libstlport.mk
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/bdw_wsb
 LOCAL_MODULE := sensors.bdw_wsb
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_CFLAGS := -DLOG_TAG=\"Sensors\"
-LOCAL_SHARED_LIBRARIES := liblog libcutils libdl libstlport
+LOCAL_SHARED_LIBRARIES := liblog libcutils libdl
 LOCAL_SRC_FILES := $(common_src_files) $(sensor_src_files) bdw_wsb/BoardConfig.cpp
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-include external/stlport/libstlport.mk
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/bytm
 LOCAL_MODULE := sensors.bytm
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_CFLAGS := -DLOG_TAG=\"Sensors\"
-LOCAL_SHARED_LIBRARIES := liblog libcutils libdl libstlport
+LOCAL_SHARED_LIBRARIES := liblog libcutils libdl
 LOCAL_SRC_FILES := $(common_src_files) $(sensor_src_files) bytm/BoardConfig.cpp
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-include external/stlport/libstlport.mk
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/hsb
 LOCAL_MODULE := sensors.hsb
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_CFLAGS := -DLOG_TAG=\"Sensors\"
-LOCAL_SHARED_LIBRARIES := liblog libcutils libdl libstlport
+LOCAL_SHARED_LIBRARIES := liblog libcutils libdl
 LOCAL_SRC_FILES := $(common_src_files) $(sensor_src_files) hsb/BoardConfig.cpp
 include $(BUILD_SHARED_LIBRARY)
