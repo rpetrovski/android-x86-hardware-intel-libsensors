@@ -77,7 +77,7 @@ int GyroSensor::processEvent(unsigned char *raw_data, size_t raw_data_len){
             (GetChannelBytesUsedSize(CHANNEL_Y), sc, sample->gyro_y);
     mPendingEvent.data[2] = mPendingEvent.gyro.z = CONVERT_FROM_VTF16
             (GetChannelBytesUsedSize(CHANNEL_Z), sc, sample->gyro_z);
-    ALOGD("GYRO 3D Sample %fm/s2 %fm/s2 %fm/s2\n", mPendingEvent.gyro.x,
+    ALOGV("GYRO 3D Sample %fm/s2 %fm/s2 %fm/s2\n", mPendingEvent.gyro.x,
         mPendingEvent.gyro.y, mPendingEvent.gyro.z);
     ALOGV("<<%s", __func__);
     return 0;
