@@ -96,9 +96,10 @@ int SensorIIODev::AllocateRxBuffer()
 
 int SensorIIODev::FreeRxBuffer()
 {
-    ALOGV(">>%s", __func__);
+    ALOGV(">>%s:%s:", device_name.c_str(), __func__);
     delete []raw_buffer;
     raw_buffer = NULL;
+    ALOGV("<<%s:%s:", device_name.c_str(), __func__);
     return 0;
 }
 
@@ -114,13 +115,21 @@ int SensorIIODev::enable(int enabled)
     return 0;
 }
 
+/**
+ * When enabled == true, 0 is the only successful result
+ * When enabled == false:
+ *  0 indicates shutdown,
+ *  negative indicates an error, though currently nothing can cause it
+ *  positive is the current reference count. Means that somebody else is
+ *          still using the sensor.
+ */
 int SensorIIODev::startStop(int enabled)
 {
     int alive = mRefCount > 0;
     mRefCount = max(0, enabled ? mRefCount+1 : mRefCount-1);
     int alivenew = mRefCount > 0;
     if (alive == alivenew)
-        return 0;
+        return enabled ? 0 : mRefCount;
 
     int ret =0;
     double sensitivity;
@@ -137,15 +146,14 @@ int SensorIIODev::startStop(int enabled)
             return ret;
         }
 
-        // QUIRK: some sensor hubs need to be turned on and off and on
-        // before sending any information. So we turn it on and off first
-        // before enabling again later in this function.
-        EnableBuffer(1);
-        EnableBuffer(0);
-
         if (ReadHIDScaleValue(&scale) < 0)
             goto err_ret;
         if (ReadHIDOffsetValue(&offset) < 0)
+            goto err_ret;
+//        sensitivity =  DeviceGetSensitivity(GetDeviceNumber());
+//        if (DeviceSetSensitivity(GetDeviceNumber(), sensitivity) < 0)
+//            goto err_ret;
+        if (AllocateRxBuffer() < 0)
             goto err_ret;
         if (SetDataReadyTrigger(GetDeviceNumber(), true) < 0)
             goto err_ret;
@@ -153,22 +161,15 @@ int SensorIIODev::startStop(int enabled)
             goto err_ret;
         if (DeviceActivate(GetDeviceNumber(), 1) < 0)
             goto err_ret;
-        sensitivity =  DeviceGetSensitivity(GetDeviceNumber());
-        if (DeviceSetSensitivity(GetDeviceNumber(), sensitivity) < 0)
-            goto err_ret;
-        if (AllocateRxBuffer() < 0)
-            goto err_ret;
         ALOGI("%s: scale=%f offset=%f", device_name.c_str(), scale, offset);
     }
-    else{
-        if (SetDataReadyTrigger(GetDeviceNumber(), false) < 0)
-            goto err_ret;
-        if (EnableBuffer(0) < 0)
-            goto err_ret;
-        if (DeviceActivate(GetDeviceNumber(), 0) < 0)
-            goto err_ret;
-        if (FreeRxBuffer() < 0)
-            goto err_ret;
+    else
+    {
+        // when going down, ignore all errors. Cleanup means cleanup!
+        DeviceActivate(GetDeviceNumber(), 0);
+        EnableBuffer(0);
+        SetDataReadyTrigger(GetDeviceNumber(), false);
+        FreeRxBuffer();
         mDevPath = "";
         close();
     }
@@ -338,7 +339,7 @@ int SensorIIODev::EnableBuffer(int status){
     std::stringstream filename;
     std::stringstream status_str;
 
-    ALOGV("%s: len:%d", __func__, status);
+    ALOGV(">>%s:%s: status:%d", device_name.c_str(), __func__, status);
 
     filename << buffer_dir_name.str() << "/" << "enable";
     PathOps path_ops;
@@ -349,6 +350,7 @@ int SensorIIODev::EnableBuffer(int status){
         return ret;
     }
     enable_buffer = status;
+    ALOGV("<<%s:%s: status:%d", device_name.c_str(), __func__, status);
     return 0;
 }
 
@@ -362,11 +364,14 @@ int SensorIIODev::EnableChannels(){
     unsigned char signchar, bits_used, total_bits, shift, unused;
     SensorIIOChannel iio_channel;
 
-    ALOGV(">>%s", __func__);
+    ALOGV(">>%s:%s: dev_device_name:%s", device_name.c_str(), __func__, dev_device_name.str().c_str());
     scan_el_dir.str(std::string());
     scan_el_dir << dev_device_name.str() << FORMAT_SCAN_ELEMENTS_DIR;
     GetDir(scan_el_dir.str(), files);
 
+    // If buffer is enabled channels cannot be changed. Disable buffer in case
+    // it has been enabled by some previous app
+    EnableBuffer(0);
     for (unsigned int i = 0; i < files.size(); i++){
         int len = files[i].length();
         if (len > 3 && files[i].compare(len - 3, 3, "_en") == 0){
@@ -379,6 +384,7 @@ int SensorIIODev::EnableChannels(){
               ALOGE("Channel Enable Error %s:%d", filename.str().c_str(), ret);
         }
     }
+    ALOGV("<<%s:%s: return:%d", device_name.c_str(), __func__, ret);
     return ret;
 }
 
@@ -393,7 +399,7 @@ int SensorIIODev::BuildChannelList(){
     SensorIIOChannel iio_channel;
     std::string type_name;
 
-    ALOGV(">>%s", __func__);
+    ALOGV(">>%s:%s: dev_device_name:%s", device_name.c_str(), __func__, dev_device_name.str().c_str());
     scan_el_dir.str(std::string());
     scan_el_dir << dev_device_name.str() << FORMAT_SCAN_ELEMENTS_DIR;
     GetDir(scan_el_dir.str(), files);
@@ -444,10 +450,23 @@ int SensorIIODev::BuildChannelList(){
                 if (!strcmp(type_name.c_str(), "le:s16/32")){
                     total_bits = 32;
                     bits_used = 16;
+                    signchar = 's';
                 }
                 else if (!strcmp(type_name.c_str(), "le:s16/16")){
                     total_bits = 16;
                     bits_used = 16;
+                    signchar = 's';
+                }
+                else if (!strcmp(type_name.c_str(), "le:s32/32")){
+                    total_bits = 32;
+                    bits_used = 32;
+                    signchar = 's';
+                }
+                else if (!strcmp(type_name.c_str(), "le:s32/32X4>>0"))
+                {
+                    total_bits = 32*4;
+                    bits_used = 32*4;
+                    signchar = 's';
                 }
                 else{
                     total_bits = 32;
@@ -464,7 +483,7 @@ int SensorIIODev::BuildChannelList(){
             info_array.push_back(iio_channel);
         }
     }
-    ALOGV("<<%s", __func__);
+    ALOGV("<<%s:%s: counter:%d", device_name.c_str(), __func__, counter);
     return counter;
 }
 
@@ -492,7 +511,7 @@ int SensorIIODev::ParseIIODirectory(const std::string& name){
     int ret;
     int size;
 
-    ALOGV(">>%s", __func__);
+    ALOGV(">>%s:%s: name:%s", device_name.c_str(), __func__, name.c_str());
 
     dev_device_name.str(std::string());
     buffer_dir_name.str(std::string());
@@ -540,8 +559,7 @@ int SensorIIODev::ParseIIODirectory(const std::string& name){
     }
 
     datum_size = GetSizeFromChannels();
-    ALOGD("%s Datum Size %d", device_name.c_str(), datum_size);
-    ALOGV("<<%s", __func__);
+    ALOGV("<<%s:%s: datum_size:%d", device_name.c_str(), __func__, datum_size);
     return 0;
 }
 
@@ -551,7 +569,7 @@ int SensorIIODev::SetDataReadyTrigger(int dev_num, bool status){
     std::stringstream trigger_name;
     int trigger_num;
 
-    ALOGV("%s: status:%d", __func__, status);
+    ALOGV(">>%s:%s: status:%d", device_name.c_str(), __func__, status);
 
     filename << dev_device_name.str() << "/trigger/current_trigger";
     trigger_name << device_name << "-dev" << dev_num;
@@ -567,6 +585,7 @@ int SensorIIODev::SetDataReadyTrigger(int dev_num, bool status){
         // Ignore error, as this may be due to
         // Trigger was active during resume
     }
+    ALOGV("<<%s:%s: return:%d", device_name.c_str(), __func__, 0);
     return 0;
 }
 
@@ -575,7 +594,7 @@ int SensorIIODev::DeviceActivate(int dev_num, int state){
     std::stringstream filename;
     std::stringstream activate_str;
 
-    ALOGV("%s: Device Activate:%d", __func__, state);
+    ALOGV("%s:%s: state:%d", device_name.c_str(), __func__, state);
     return 0;
 }
 
@@ -595,6 +614,8 @@ double SensorIIODev::DeviceGetSensitivity(int dev_num){
     }
     istringstream buffer(sensitivity_str);
     buffer >> value;
+
+    ALOGV("%s:%s: value:%f", device_name.c_str(), __func__, value);
     return value;
 }
 
@@ -602,8 +623,6 @@ double SensorIIODev::DeviceGetSensitivity(int dev_num){
 int SensorIIODev::DeviceSetSensitivity(int dev_num, double value){
     std::stringstream filename;
     std::stringstream sensitivity_str;
-
-    ALOGV("%s: Sensitivity :%d", __func__, value);
 
     filename << IIO_DIR << "/" << "iio:device" << dev_num << "/" << channel_prefix_str << "hysteresis";
 
@@ -614,6 +633,7 @@ int SensorIIODev::DeviceSetSensitivity(int dev_num, double value){
         ALOGE("Write Error %s", filename.str().c_str());
         // Don't bail out as this  field may be absent
     }
+    ALOGV("%s:%s: value:%f", device_name.c_str(), __func__, value);
     return 0;
 }
 
@@ -621,8 +641,6 @@ int SensorIIODev::DeviceSetSensitivity(int dev_num, double value){
 int SensorIIODev::SetSampleDelay(int dev_num, int period){
     std::stringstream filename;
     std::stringstream sample_rate_str;
-
-    ALOGV("%s: sample_rate:%d", __func__, period);
 
     if (sample_delay_min_ms && period < sample_delay_min_ms)
         period = sample_delay_min_ms;
@@ -638,6 +656,7 @@ int SensorIIODev::SetSampleDelay(int dev_num, int period){
         ALOGE("Write Error %s", filename.str().c_str());
         // Don't bail out as this  field may be absent
     }
+    ALOGV("%s:%s: period:%d", device_name.c_str(), __func__, period);
     return 0;
 }
 
@@ -645,19 +664,31 @@ int SensorIIODev::readEvents(sensors_event_t *data, int count){
     ssize_t read_size;
     int numEventReceived;
 
+    ALOGV(">>%s:%s: count:%d", device_name.c_str(), __func__, count);
+
     if (count < 1)
+    {
+        ALOGV("<<%s:%s: return:%d", device_name.c_str(), __func__, -EINVAL);
         return  - EINVAL;
+    }
 
     if (mFd < 0)
+    {
+        ALOGV("<<%s:%s: return:%d", device_name.c_str(), __func__, -EBADF);
         return  - EBADF;
+    }
 
     if (!raw_buffer)
+    {
+        ALOGV("<<%s:%s: return:%d", device_name.c_str(), __func__, -EAGAIN);
         return - EAGAIN;
+    }
 
     if (mHasPendingEvent){
         mHasPendingEvent = false;
         mPendingEvent.timestamp = getTimestamp();
         *data = mPendingEvent;
+        ALOGV("<<%s:%s: return:%d", device_name.c_str(), __func__, 1);
         return 1;
     }
     read_size = read(mFd, raw_buffer, datum_size);
@@ -676,6 +707,7 @@ int SensorIIODev::readEvents(sensors_event_t *data, int count){
             }
         }
     }
+    ALOGV("<<%s:%s: numEventReceived:%d", device_name.c_str(), __func__, numEventReceived);
     return numEventReceived;
 }
 
@@ -698,6 +730,7 @@ static int ReadHIDSysValue(int dev, const std::string& sys_str, float *value){
 
     if (long_str.length() > 0){
         *value = atof(long_str.c_str());
+        ALOGV("%s: read %s %f", __func__, filename.str().c_str(), *value);
         return 0;
     }
     ALOGE("%s: read %s failed", __func__, filename.str().c_str());

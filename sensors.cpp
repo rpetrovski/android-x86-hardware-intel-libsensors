@@ -57,6 +57,10 @@ static int sensors__get_sensors_list(struct sensors_module_t*,
 static struct hw_module_methods_t sensors_module_methods = {
         open: open_sensors
 };
+static int sensors_set_operation_mode(unsigned int mode)
+{
+    return 0;
+}
 
 struct sensors_module_t HAL_MODULE_INFO_SYM = {
         common: {
@@ -71,6 +75,7 @@ struct sensors_module_t HAL_MODULE_INFO_SYM = {
                 reserved: {}
         },
         get_sensors_list: sensors__get_sensors_list,
+        set_operation_mode : sensors_set_operation_mode
 };
 
 struct sensors_poll_context_t {
@@ -106,15 +111,19 @@ sensors_poll_context_t::sensors_poll_context_t()
         }
     }
 
-    // Mild hack: the synthetic compass is implemented as a slave of
-    // the rotation vector, so we have to tell them about each other
-    // explicitly in lieu of an architecture that lets them probe.
-    SensorBase *rv = mSensors[rotvec], *sc = mSensors[syncompass];
-    if (rv && sc) {
-        ((RotVecSensor*)rv)->setSynthCompass((SynthCompassSensor*)sc);
-        ((SynthCompassSensor*)sc)->setRotVecSensor((RotVecSensor*)rv);
-    }
+// This stuff does not work and it does not compile unless rotvec and syncompass are defined
+// Trouble is, once rotvec and syncompass are defined, all sorts of code begins to expect
+// the corresponding mSensors elements to be valid.
 
+//    // Mild hack: the synthetic compass is implemented as a slave of
+//    // the rotation vector, so we have to tell them about each other
+//    // explicitly in lieu of an architecture that lets them probe.
+//    SensorBase *rv = mSensors[rotvec], *sc = mSensors[syncompass];
+//    if (rv && sc) {
+//        ((RotVecSensor*)rv)->setSynthCompass((SynthCompassSensor*)sc);
+//        ((SynthCompassSensor*)sc)->setRotVecSensor((RotVecSensor*)rv);
+//    }
+//
     int wakeFds[2];
     int result = pipe(wakeFds);
     ALOGE_IF(result<0, "error creating wake pipe (%s)", strerror(errno));
@@ -143,12 +152,17 @@ int sensors_poll_context_t::activate(int handle, int enabled) {
     SensorBase* const s(mSensors[index]);
     int err = 0;
 
-    if (enabled) {
+    if (enabled)
+    {
         if ((err = s->enable(1)) < 0)
             s->close();
-    } else {
-        s->enable(0);
-        s->close();
+    }
+    else
+    {
+        if (!s->enable(0))
+        {
+            s->close();
+        }
     }
 
     /* If the file descriptor is closed or opened the stored desciptor
